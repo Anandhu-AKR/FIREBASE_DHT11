@@ -192,10 +192,6 @@ DHT11
 ├── Humidity: 55.0
 └── Temperature: 27.0
 ```
-
-## 🛡️ Security Note
-✅ Important: Avoid committing your real Wi-Fi credentials, API keys, and passwords to public repositories. Always use placeholders or environment variables.
-
 ## 🤝 Credits
 - [**Firebase-ESP8266 library**](https://github.com/mobizt/Firebase-ESP8266) by Mobizt
 - [**DHT sensor library**](https://github.com/adafruit/DHT-sensor-library) by Adafruit
