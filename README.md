@@ -84,6 +84,108 @@ In Arduino IDE, go to Library Manager:
 - Upload the code.
 - Open Serial Monitor at **115200 baud** to see status and debug logs.
 
+## 💻 Complete Example Code
+```c
+
+/**
+ * Sample Firebase ESP8266 program to read DHT11 sensor values
+ * and log them to Firebase Realtime Database.
+ *
+ * Based on Firebase-ESP8266 library by K. Suwatchai (Mobizt)
+ * https://github.com/mobizt/Firebase-ESP8266
+ */
+
+#include <Arduino.h>
+#include <ESP8266WiFi.h>
+#include <FirebaseESP8266.h>
+#include <DHT.h>
+
+// Add your Wi-Fi credentials
+#define WIFI_SSID "YOUR_WIFI_SSID"
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+
+// Your Firebase project credentials
+#define API_KEY "YOUR_FIREBASE_API_KEY"
+#define DATABASE_URL "YOUR_DATABASE_URL" // e.g., "https://your-project-id.firebaseio.com/"
+#define USER_EMAIL "YOUR_FIREBASE_USER_EMAIL"
+#define USER_PASSWORD "YOUR_FIREBASE_USER_PASSWORD"
+
+// DHT11 sensor configuration
+#define DHTPIN D2
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+// Firebase objects
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+
+unsigned long sendDataPrevMillis = 0;
+
+void setup()
+{
+  Serial.begin(115200);
+  dht.begin();
+
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    delay(300);
+  }
+  Serial.println();
+  Serial.print("Connected with IP: ");
+  Serial.println(WiFi.localIP());
+
+  config.api_key = API_KEY;
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
+  config.database_url = DATABASE_URL;
+  config.token_status_callback = tokenStatusCallback; // optional
+
+  Firebase.reconnectNetwork(true);
+  fbdo.setBSSLBufferSize(4096, 1024);
+  Firebase.begin(&config, &auth);
+  Firebase.setDoubleDigits(5);
+}
+
+void loop()
+{
+  if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
+  {
+    sendDataPrevMillis = millis();
+    float h = dht.readHumidity();
+    float t = dht.readTemperature();
+
+    if (isnan(h) || isnan(t))
+    {
+      Serial.println(F("Failed to read from DHT sensor!"));
+      return;
+    }
+
+    Serial.print("Humidity: ");
+    Serial.print(h);
+    Serial.print("%  Temperature: ");
+    Serial.print(t);
+    Serial.println("°C");
+
+    if (Firebase.setFloat(fbdo, F("/DHT11/Humidity"), h))
+      Serial.println("Humidity data sent successfully.");
+    else
+      Serial.println(fbdo.errorReason());
+
+    if (Firebase.setFloat(fbdo, F("/DHT11/Temperature"), t))
+      Serial.println("Temperature data sent successfully.");
+    else
+      Serial.println(fbdo.errorReason());
+
+    Serial.println();
+  }
+}
+
+```
+
 ## 📊 Firebase Data Structure Example
 ```yaml
 DHT11
